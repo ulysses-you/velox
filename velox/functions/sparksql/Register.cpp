@@ -72,7 +72,6 @@ static void workAroundRegistrationMacro(const std::string& prefix) {
       udf_concat_row, exec::RowConstructorCallToSpecialForm::kRowConstructor);
   // String functions.
   VELOX_REGISTER_VECTOR_FUNCTION(udf_concat, prefix + "concat");
-  VELOX_REGISTER_VECTOR_FUNCTION(udf_concat_ws, prefix + "concat_ws");
   VELOX_REGISTER_VECTOR_FUNCTION(udf_lower, prefix + "lower");
   VELOX_REGISTER_VECTOR_FUNCTION(udf_upper, prefix + "upper");
   // Logical.
@@ -178,6 +177,8 @@ void registerFunctions(const std::string& prefix) {
       prefix + "length", lengthSignatures(), makeLength);
   registerFunction<SubstringIndexFunction, Varchar, Varchar, Varchar, int32_t>(
       {prefix + "substring_index"});
+  exec::registerStatefulVectorFunction(
+      prefix + "concat_ws", concatWsSignatures(), makeConcatWs);
 
   registerFunction<Md5Function, Varchar, Varbinary>({prefix + "md5"});
   registerFunction<Sha1HexStringFunction, Varchar, Varbinary>(
