@@ -1002,7 +1002,7 @@ TEST_F(StringTest, concat_ws) {
       return StringView(value);
     });
 
-    test::assertEqualVectors(expected, result);
+    velox::test::assertEqualVectors(expected, result);
 
     result = evaluate<SimpleVector<StringView>>(
         "concat_ws('$*@', 'aaa', 'bbb', c0, 'ccc', 'ddd', c1, 'eee', 'fff')",
@@ -1020,7 +1020,7 @@ TEST_F(StringTest, concat_ws) {
           delim + "eee" + delim + "fff";
       return StringView(value);
     });
-    test::assertEqualVectors(expected, result);
+    velox::test::assertEqualVectors(expected, result);
   }
 }
 } // namespace
