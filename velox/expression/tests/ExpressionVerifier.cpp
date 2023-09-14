@@ -28,17 +28,53 @@ void logRowVector(const RowVectorPtr& rowVector) {
   if (rowVector == nullptr) {
     return;
   }
-  VLOG(1) << rowVector->childrenSize() << " vectors as input:";
+  VLOG(0) << rowVector->childrenSize() << " vectors as input:";
   for (const auto& child : rowVector->children()) {
-    VLOG(1) << "\t" << child->toString(/*recursive=*/true);
+    VLOG(0) << "\t" << child->toString(/*recursive=*/true);
   }
 
-  VLOG(1) << "RowVector contents (" << rowVector->type()->toString() << "):";
+  VLOG(0) << "RowVector contents (" << rowVector->type()->toString() << "):";
 
   for (vector_size_t i = 0; i < rowVector->size(); ++i) {
-    VLOG(1) << "\tAt " << i << ": " << rowVector->toString(i);
+    VLOG(0) << "\tAt " << i << ": " << rowVector->toString(i);
   }
 }
+
+namespace {
+auto createCopy(const VectorPtr& input) {
+  VectorPtr result;
+  SelectivityVector rows(input->size());
+  BaseVector::ensureWritable(rows, input->type(), input->pool(), result);
+  result->copy(input.get(), rows, nullptr);
+  return result;
+}
+} // namespace
+
+void compareVectors(
+    const VectorPtr& left,
+    const VectorPtr& right,
+    const SelectivityVector& rows) {
+  // Print vector contents if in verbose mode.
+  size_t vectorSize = left->size();
+  VLOG(0) << "== Result contents (common vs. simple): ";
+  rows.applyToSelected([&](vector_size_t row) {
+    VLOG(0) << fmt::format(
+        "At {} [ {} vs {} ]", row, left->toString(row), right->toString(row));
+  });
+  VLOG(0) << "===================";
+
+  rows.applyToSelected([&](vector_size_t row) {
+    VELOX_CHECK(
+        left->equalValueAt(right.get(), row, row),
+        "Different results at idx '{}': '{}' vs. '{}'",
+        row,
+        left->toString(row),
+        right->toString(row));
+  });
+
+  LOG(INFO) << "All results match.";
+}
+
 } // namespace
 
 ResultOrError ExpressionVerifier::verify(
@@ -102,7 +138,7 @@ ResultOrError ExpressionVerifier::verify(
   std::exception_ptr exceptionCommonPtr;
   std::exception_ptr exceptionSimplifiedPtr;
 
-  VLOG(1) << "Starting common eval execution.";
+  VLOG(0) << "Starting common eval execution.";
   SelectivityVector rows{rowVector ? rowVector->size() : 1};
 
   // Execute with common expression eval path. Some columns of the input row
@@ -115,7 +151,7 @@ ResultOrError ExpressionVerifier::verify(
     if (!columnsToWrapInLazy.empty()) {
       inputRowVector =
           VectorFuzzer::fuzzRowChildrenToLazy(rowVector, columnsToWrapInLazy);
-      VLOG(1) << "Modified inputs for common eval path: ";
+      VLOG(0) << "Modified inputs for common eval path: ";
       logRowVector(inputRowVector);
     } else {
       // Copy loads lazy vectors so only do this when there are no lazy inputs.
@@ -150,7 +186,7 @@ ResultOrError ExpressionVerifier::verify(
     throw;
   }
 
-  VLOG(1) << "Starting simplified eval execution.";
+  VLOG(0) << "Starting simplified eval execution.";
 
   // Execute with simplified expression eval path.
   try {
