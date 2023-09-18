@@ -54,6 +54,10 @@ int main(int argc, char** argv) {
       "width_bucket",
       // Fuzzer cannot generate valid 'comparator' lambda.
       "array_sort(array(T),constant function(T,T,bigint)) -> array(T)",
+      // Skip concat as it triggers a test failure due to an incorrect
+      // expression generation from fuzzer:
+      // https://github.com/facebookincubator/velox/issues/6590
+      "concat_ws",
   };
   size_t initialSeed = FLAGS_seed == 0 ? std::time(nullptr) : FLAGS_seed;
   return FuzzerRunner::run(initialSeed, skipFunctions);
