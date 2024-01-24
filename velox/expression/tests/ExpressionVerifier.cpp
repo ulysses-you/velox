@@ -49,32 +49,6 @@ auto createCopy(const VectorPtr& input) {
   return result;
 }
 } // namespace
-
-void compareVectors(
-    const VectorPtr& left,
-    const VectorPtr& right,
-    const SelectivityVector& rows) {
-  // Print vector contents if in verbose mode.
-  size_t vectorSize = left->size();
-  VLOG(1) << "== Result contents (common vs. simple): ";
-  rows.applyToSelected([&](vector_size_t row) {
-    VLOG(1) << fmt::format(
-        "At {} [ {} vs {} ]", row, left->toString(row), right->toString(row));
-  });
-  VLOG(1) << "===================";
-
-  rows.applyToSelected([&](vector_size_t row) {
-    VELOX_CHECK(
-        left->equalValueAt(right.get(), row, row),
-        "Different results at idx '{}': '{}' vs. '{}'",
-        row,
-        left->toString(row),
-        right->toString(row));
-  });
-
-  LOG(INFO) << "All results match.";
-}
-
 } // namespace
 
 ResultOrError ExpressionVerifier::verify(
