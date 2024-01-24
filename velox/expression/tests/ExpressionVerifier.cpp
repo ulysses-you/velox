@@ -39,16 +39,6 @@ void logRowVector(const RowVectorPtr& rowVector) {
     VLOG(1) << "\tAt " << i << ": " << rowVector->toString(i);
   }
 }
-
-namespace {
-auto createCopy(const VectorPtr& input) {
-  VectorPtr result;
-  SelectivityVector rows(input->size());
-  BaseVector::ensureWritable(rows, input->type(), input->pool(), result);
-  result->copy(input.get(), rows, nullptr);
-  return result;
-}
-} // namespace
 } // namespace
 
 ResultOrError ExpressionVerifier::verify(
